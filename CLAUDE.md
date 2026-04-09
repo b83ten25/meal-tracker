@@ -2,8 +2,37 @@
 
 ## 프로젝트 개요
 병원 직원 식대 관리 앱. 순수 HTML/React CDN. 서버 없음.
+Electron으로 패키징하여 Mac(dmg) / Windows(exe) 배포.
 
-## 현재 상태
+## 파일 구조
+```
+meal-tracker/
+├── index.html          # 앱 전체 (React CDN, 스타일, 로직)
+├── main.js             # Electron 메인 프로세스
+├── package.json        # npm 스크립트 + electron-builder 설정
+├── .github/workflows/
+│   └── build.yml       # GitHub Actions: Mac·Win 자동 빌드
+└── .gitignore
+```
+
+## 실행 / 빌드
+```bash
+npm start           # 로컬 Electron 실행
+npm run build:mac   # dist/*.dmg 생성
+npm run build:win   # dist/*.exe 생성 (NSIS 설치형)
+```
+
+## Electron 설정
+- BrowserWindow: 1280×800, min 900×600
+- titleBarStyle: default
+- appId: com.hospital.meal-tracker
+- productName: 식대관리
+
+## GitHub Actions (push to main)
+- job build-mac (macos-latest): dmg 아티팩트 업로드
+- job build-win (windows-latest): exe 아티팩트 업로드
+
+## 앱 기능 현황
 - 직원 5명 기본값 (createdMonth 필드 없음 → getBal에서 month 기준)
 - 직원 추가 시 createdMonth 저장 → 이월 계산 기준월로 사용
 - PIN 로그인 (4자리)
@@ -16,26 +45,21 @@
 - first 달부터 현재달까지 순차 루프하며 carry 누적
 
 ## 직원 관리 UX
-- 직원 추가: 사이드바 "+ 직원 추가" → AddEmployeeModal (이름 + 한도 스테퍼)
-- 직원 삭제: 사이드바 직원 카드 호버 시 × 버튼 → confirm 후 즉시 삭제
+- 직원 추가: 사이드바 "+ 직원 추가" → AddEmployeeModal
+- 직원 삭제: 사이드바 카드 호버 시 × 버튼
 
 ## 직원 상세 패널
-- 6개월 숫자 테이블 (MonthlyTable): 이번달 파란색★, 미사용 "-"
-- 월 한도: detail-hd 우측 인라인 스테퍼 (30px 버튼, 1,000원 단위, 최소 10,000원)
-  - ArrowUp/Down 키보드 지원
+- 6개월 숫자 테이블: 이번달 파란색★, 미사용 "-"
+- 월 한도: detail-hd 인라인 스테퍼 (1,000원 단위, ArrowUp/Down 지원)
 
 ## 내역 관리
-- 행 클릭 → EditExpenseModal (직원/날짜/금액/사용처 pre-fill)
-- 삭제: hover 시 우측 × 아이콘만 표시 (텍스트 없음, 클릭해도 행 선택 안 됨)
-- compact 레이아웃: padding 7px, 사용처+날짜 한 줄
+- 행 클릭 → EditExpenseModal
+- 삭제: hover 시 × 아이콘
 
 ## UI 스펙
 - 요약 카드 4개: 숫자 색상으로 구분, 총 사용 카드에 진행바
-  - 레이블 11px #999 bold, 숫자 20px bold, 서브 12px
 - 모달 내 input/select: height 52px, font-size 16px
-- 모든 버튼/select/input 최소 높이 48px (단, limit-inline-btn·txn-del 등 작은 버튼은 min-height:unset)
 - fmtS: 10000원 미만 "X,XXX원", 이상 "X만원"/"X.X만원"
-- 직원 상세 통계 카드: fmtS 만원 단위 표시
 
 ## 알려진 버그
 - 없음

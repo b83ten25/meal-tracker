@@ -643,7 +643,10 @@ function App(){
 
       H("div",{className:"body-split"},
         H("div",{className:"emp-panel"},
-          H("div",{className:"emp-panel-hd"},"직원 "+data.employees.length+"명"),
+          H("div",{className:"emp-panel-hd",style:{display:"flex",alignItems:"center",justifyContent:"space-between"}},
+            H("span",null,"직원 "+data.employees.length+"명"),
+            selEmp&&H("button",{className:"btn btn-ghost btn-sm",style:{fontSize:11,padding:"3px 8px",minHeight:"unset",height:"auto"},onClick:()=>setSelEmp(null)},"전체 보기")
+          ),
           H("div",{className:"emp-scroll"},
             empBals.map((emp,i)=>{
               const c=COLORS[i%COLORS.length];
