@@ -23,7 +23,9 @@
       "main.js"
     ],
     "mac": {
-      "target": "dmg"
+      "target": "dmg",
+      "identity": null,
+      "gatekeeperAssess": false
     },
     "win": {
       "target": "nsis"
