@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>병원 식대 관리</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<style>
+:root,[data-theme="light"]{
+  --bg:#fff;--bg2:#f8f8f6;--bg3:#f0f0ee;--bg4:#e4e4e0;
+  --text:#191919;--text2:#666;--text3:#999;
+  --border:#e4e4e0;--border2:#ccc;
+  --blue:#0066FF;--blue-bg:#EBF2FF;--blue-text:#0044BB;
+  --ok:#00B493;--ok-bg:#E6F7F4;--ok-text:#007A64;
+  --warn:#F0930A;--warn-bg:#FEF3E2;--warn-text:#A05E00;
+  --danger:#F04438;--danger-bg:#FEE8E7;--danger-text:#A3140E;
+  --card-bg:#fff;--card-border:#e4e4e0;
+  --r:12px;--rlg:16px;--rxl:20px;
+}
+[data-theme="dark"]{
+  --bg:#111;--bg2:#1c1c1c;--bg3:#242424;--bg4:#2e2e2e;
+  --text:#f0f0f0;--text2:#888;--text3:#555;
+  --border:#2e2e2e;--border2:#3a3a3a;
+  --blue:#4D94FF;--blue-bg:#0a1a33;--blue-text:#7ab3ff;
+  --ok:#00C9A7;--ok-bg:#0a1f1c;--ok-text:#00e0bb;
+  --warn:#F0B429;--warn-bg:#1f1600;--warn-text:#f5c842;
+  --danger:#F76060;--danger-bg:#200a0a;--danger-text:#f98080;
+  --card-bg:#1c1c1c;--card-border:#2e2e2e;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+html,body{height:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:15px;transition:background .2s,color .2s;}
+input,select,button{font-family:inherit;font-size:14px;}
+input,select{background:var(--bg2);color:var(--text);border:1.5px solid var(--border);border-radius:var(--r);padding:11px 14px;outline:none;width:100%;transition:border-color .15s;}
+.btn,input:not([type="checkbox"]):not([type="range"]),select{min-height:48px;}
+input:focus,select:focus{border-color:var(--blue);background:var(--card-bg);}
+.btn{background:none;border:1.5px solid var(--border2);border-radius:var(--r);padding:10px 20px;cursor:pointer;color:var(--text);font-size:14px;font-weight:500;transition:background .1s,opacity .1s;}
+.btn:hover{background:var(--bg3);}
+.btn:active{opacity:.75;}
+.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text);}
+.btn-primary:hover{opacity:.88;}
+.btn-sm{padding:6px 13px;font-size:13px;}
+.btn-danger{border-color:var(--danger);color:var(--danger);background:none;}
+.btn-danger:hover{background:var(--danger-bg);}
+.btn-ghost{border-color:transparent;color:var(--text2);}
+.btn-ghost:hover{background:var(--bg3);color:var(--text);}
+
+/* ── LOGIN ── */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg3);}
+.login-box{background:var(--card-bg);border-radius:var(--rxl);padding:2.5rem 2rem;width:340px;text-align:center;border:1.5px solid var(--card-border);}
+.login-title{font-size:22px;font-weight:700;margin-bottom:5px;}
+.login-sub{font-size:14px;color:var(--text2);margin-bottom:2rem;}
+.pin-dots{display:flex;justify-content:center;gap:16px;margin-bottom:2rem;}
+.pin-dot{width:15px;height:15px;border-radius:50%;border:2px solid var(--border2);background:transparent;transition:all .15s;}
+.pin-dot.filled{background:var(--blue);border-color:var(--blue);}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:.75rem;}
+.pin-btn{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:18px;font-size:22px;font-weight:500;cursor:pointer;color:var(--text);transition:background .1s;}
+.pin-btn:hover{background:var(--bg3);}
+.pin-btn:active{background:var(--bg4);}
+.pin-error{color:var(--danger);font-size:13px;min-height:20px;margin-top:6px;}
+.pin-keyboard-hint{font-size:12px;color:var(--text3);margin-top:8px;}
+
+/* ── SHELL ── */
+.shell{display:flex;flex-direction:column;height:100vh;max-width:1200px;margin:0 auto;padding:1.25rem 1.25rem 0;}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-shrink:0;}
+.month-nav{display:flex;align-items:center;gap:8px;}
+.mnav-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--card-bg);border:1.5px solid var(--border);cursor:pointer;color:var(--text);font-size:18px;transition:background .1s;}
+.mnav-btn:hover{background:var(--bg3);}
+.month-label{font-size:19px;font-weight:700;min-width:118px;text-align:center;}
+.top-right{display:flex;gap:8px;}
+
+/* ── SUMMARY ── */
+.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem;flex-shrink:0;}
+.s-card{background:var(--card-bg);border-radius:var(--rlg);border:1px solid var(--card-border);overflow:hidden;display:flex;flex-direction:column;}
+.s-card-body{padding:14px 18px 10px;flex:1;}
+.s-label{font-size:11px;color:#999;margin-bottom:6px;font-weight:700;letter-spacing:.02em;}
+.s-val{font-size:20px;font-weight:700;letter-spacing:-.02em;}
+.s-sub{font-size:12px;color:var(--text3);margin-top:3px;}
+.s-progress-wrap{height:4px;background:var(--bg3);margin:0 18px 10px;border-radius:2px;overflow:hidden;}
+.s-progress-fill{height:100%;border-radius:2px;transition:width .3s;}
+
+/* ── BODY ── */
+.body-split{display:grid;grid-template-columns:240px 1fr;gap:10px;flex:1;min-height:0;padding-bottom:1.25rem;}
+.emp-panel{background:var(--card-bg);border-radius:var(--rlg);border:1.5px solid var(--card-border);display:flex;flex-direction:column;overflow:hidden;}
+.emp-panel-hd{padding:14px 18px 10px;font-size:12px;font-weight:700;color:var(--text2);letter-spacing:.05em;flex-shrink:0;}
+.emp-scroll{overflow-y:auto;flex:1;}
+.emp-row{padding:14px 18px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;position:relative;}
+.emp-row:hover{background:var(--bg2);}
+.emp-row.sel{background:var(--blue-bg);}
+.emp-del{position:absolute;top:10px;right:10px;width:22px;height:22px;min-height:unset;display:flex;align-items:center;justify-content:center;border-radius:50%;background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;opacity:0;transition:opacity .15s,background .1s;padding:0;line-height:1;}
+.emp-row:hover .emp-del{opacity:1;}
+.emp-del:hover{background:var(--danger-bg)!important;color:var(--danger)!important;}
+.emp-top{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.emp-av{width:34px;height:34px;border-radius:50%;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.emp-nm{font-size:15px;font-weight:600;}
+.emp-carry{font-size:11px;font-weight:600;color:var(--blue-text);background:var(--blue-bg);padding:2px 7px;border-radius:100px;display:inline-block;margin-top:2px;}
+.emp-bar-wrap{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-bottom:7px;}
+.emp-bar-fill{height:100%;border-radius:2px;}
+.emp-nums{display:flex;justify-content:space-between;font-size:13px;font-weight:500;}
+.emp-add-row{padding:14px 18px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:var(--text2);font-size:14px;font-weight:500;border-top:1px solid var(--border);flex-shrink:0;transition:background .1s;}
+.emp-add-row:hover{background:var(--bg2);}
+
+/* ── DETAIL ── */
+.detail-panel{background:var(--card-bg);border-radius:var(--rlg);border:1.5px solid var(--card-border);display:flex;flex-direction:column;overflow:hidden;}
+.detail-hd{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.d-name-area{display:flex;align-items:center;gap:13px;}
+.d-av{width:42px;height:42px;border-radius:50%;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.d-name{font-size:22px;font-weight:700;cursor:pointer;padding-bottom:2px;border-bottom:2px dashed var(--border2);}
+.d-name:hover{border-bottom-color:var(--blue);}
+.d-name-input{font-size:22px;font-weight:700;border:none;border-bottom:2px solid var(--blue);background:transparent;color:var(--text);outline:none;width:200px;padding:2px 4px;}
+.d-hint{font-size:12px;color:var(--text3);margin-top:3px;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);flex-shrink:0;}
+.stat-cell{padding:16px 22px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);}
+.stat-cell:last-child{border-right:none;}
+.stat-lbl{font-size:12px;color:var(--text2);font-weight:500;margin-bottom:5px;}
+.stat-val{font-size:19px;font-weight:700;}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.limit-inline{display:flex;align-items:center;gap:5px;}
+.limit-inline-lbl{font-size:11px;color:var(--text2);font-weight:600;margin-right:2px;}
+.limit-inline-btn{width:30px;height:30px;min-height:unset;font-size:18px;font-weight:300;background:var(--bg2);border:1.5px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:background .1s;flex-shrink:0;padding:0;}
+.limit-inline-btn:hover{background:var(--bg3);}
+.limit-inline-val{font-size:13px;font-weight:700;min-width:78px;text-align:center;outline:none;}
+.txn-hd-row{padding:10px 24px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.txn-hd-lbl{font-size:13px;font-weight:700;color:var(--text2);}
+.txn-scroll{overflow-y:auto;flex:1;}
+.txn-row{padding:7px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);transition:background .1s;cursor:pointer;position:relative;}
+.txn-row:hover{background:var(--bg2);}
+.txn-left{display:flex;align-items:baseline;gap:8px;min-width:0;flex:1;}
+.txn-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.txn-date{font-size:12px;color:var(--text3);flex-shrink:0;}
+.txn-right{display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:12px;}
+.txn-amt{font-size:14px;font-weight:700;}
+.txn-del{width:22px;height:22px;min-height:unset;display:flex;align-items:center;justify-content:center;border-radius:50%;background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;opacity:0;transition:opacity .15s,background .1s;padding:0;line-height:1;}
+.txn-row:hover .txn-del{opacity:1;}
+.txn-del:hover{background:var(--danger-bg)!important;color:var(--danger)!important;}
+.empty-state{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:14px;}
+.all-hd{padding:20px 24px;font-size:19px;font-weight:700;border-bottom:1px solid var(--border);flex-shrink:0;}
+
+/* ── MODAL ── */
+.modal-bd{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem;}
+.modal{background:var(--card-bg);border-radius:var(--rxl);padding:2rem;width:520px;max-width:100%;max-height:90vh;overflow-y:auto;border:1.5px solid var(--card-border);}
+.modal input,.modal select{height:52px;font-size:16px;padding:14px 16px;}
+.modal-title{font-size:19px;font-weight:700;margin-bottom:1.5rem;}
+.fg{margin-bottom:16px;}
+.fg label{font-size:13px;font-weight:600;color:var(--text2);display:block;margin-bottom:7px;}
+.fg-row{display:flex;gap:12px;}
+.fg-row .fg{flex:1;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;}
+
+/* ── DATE SELECTOR ── */
+.date-selects{display:flex;gap:8px;}
+.date-selects select{font-size:16px;font-weight:500;text-align:center;padding:14px 8px;flex:none;}
+.date-selects select:nth-child(1){width:100px;}
+.date-selects select:nth-child(2){width:70px;}
+.date-selects select:nth-child(3){width:70px;}
+
+/* ── AMOUNT STEPPER ── */
+.stepper-wrap{background:var(--bg2);border-radius:var(--rlg);border:1.5px solid var(--border);overflow:hidden;}
+.stepper-row{display:flex;align-items:stretch;}
+.step-btn{width:60px;height:64px;background:none;border:none;cursor:pointer;font-size:28px;font-weight:300;color:var(--text2);transition:background .1s,color .1s;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.step-btn:hover{background:var(--bg3);color:var(--text);}
+.step-btn:active{background:var(--bg4);}
+.step-display{flex:1;text-align:center;font-size:24px;font-weight:700;padding:18px 8px;border:none;background:transparent;color:var(--text);outline:none;cursor:pointer;letter-spacing:-.02em;}
+.step-display:hover{color:var(--blue);}
+.step-input{flex:1;text-align:center;font-size:24px;font-weight:700;padding:18px 8px;border:none;background:transparent;color:var(--blue);outline:none;letter-spacing:-.02em;width:0;}
+.stepper-hint{font-size:11px;color:var(--text3);text-align:center;padding:4px 0 6px;}
+.stepper-divider{height:1px;background:var(--border);}
+.preset-row{display:flex;padding:10px 12px;gap:8px;}
+.preset-btn{flex:1;padding:10px 4px;font-size:14px;font-weight:600;background:var(--card-bg);border:1.5px solid var(--border);border-radius:10px;cursor:pointer;color:var(--text);transition:border-color .1s,background .1s;}
+.preset-btn:hover{border-color:var(--blue);color:var(--blue);}
+.preset-btn.active{background:var(--blue-bg);border-color:var(--blue);color:var(--blue-text);}
+
+/* ── PLACE CHIPS ── */
+.place-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
+.place-chip{padding:12px 18px;height:44px;background:var(--card-bg);border:1.5px solid var(--border);border-radius:100px;font-size:15px;font-weight:600;cursor:pointer;color:var(--text);transition:border-color .1s;display:inline-flex;align-items:center;}
+.place-chip:hover{border-color:var(--blue);color:var(--blue);}
+.place-chip.active{background:var(--blue-bg);border-color:var(--blue);color:var(--blue-text);}
+
+/* ── SETTINGS ── */
+.settings-w{width:520px;}
+.sec-title{font-size:12px;font-weight:700;color:var(--text2);letter-spacing:.05em;margin-bottom:10px;}
+.sec{margin-bottom:1.5rem;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border);}
+.toggle-lbl{font-size:15px;font-weight:600;}
+.toggle-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+.toggle{position:relative;width:46px;height:27px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.tslider{position:absolute;inset:0;background:var(--bg4);border-radius:14px;cursor:pointer;transition:.2s;}
+.tslider:before{content:"";position:absolute;width:21px;height:21px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+input:checked+.tslider{background:var(--blue);}
+input:checked+.tslider:before{transform:translateX(19px);}
+.warn-row{display:flex;align-items:center;gap:12px;padding:10px 0;}
+.warn-slider{flex:1;accent-color:var(--warn);}
+.warn-val{font-size:16px;font-weight:700;min-width:40px;text-align:right;color:var(--warn);}
+.s-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);}
+.s-row:last-child{border-bottom:none;}
+.s-av{width:30px;height:30px;border-radius:50%;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.fav-list{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0;}
+.fav-chip{display:flex;align-items:center;gap:5px;padding:7px 12px;background:var(--bg2);border:1.5px solid var(--border);border-radius:100px;font-size:13px;font-weight:500;}
+.fav-chip .x{cursor:pointer;color:var(--text3);font-size:15px;}
+.fav-chip .x:hover{color:var(--danger);}
+.fav-add{display:flex;gap:8px;margin-top:6px;}
+.pill{font-size:12px;padding:2px 9px;border-radius:100px;font-weight:600;}
+
+/* ── MONTHLY TABLE ── */
+.month-table{padding:8px 24px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.month-table-row{display:flex;}
+.month-table-cell{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;}
+.month-table-lbl{font-size:11px;color:var(--text3);font-weight:500;}
+.month-table-val{font-size:13px;font-weight:600;color:var(--text2);}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const {useState,useEffect,useMemo,useRef,useCallback}=React;
+const H=React.createElement;
+const SK="meal_v7";
+const COLORS=[
+  {bg:"#EBF2FF",text:"#0044BB",bar:"#0066FF"},
+  {bg:"#E6F7F4",text:"#007A64",bar:"#00B493"},
+  {bg:"#FEF3E2",text:"#A05E00",bar:"#F0930A"},
+  {bg:"#F3EFFE",text:"#5B21B6",bar:"#7C3AED"},
+  {bg:"#FEE8E7",text:"#A3140E",bar:"#F04438"},
+  {bg:"#FBEAF0",text:"#9D174D",bar:"#EC4899"},
+  {bg:"#ECFDF5",text:"#065F46",bar:"#10B981"},
+];
+const DEF_EMP=[
+  {id:1,name:"직원 1",limit:100000},
+  {id:2,name:"직원 2",limit:100000},
+  {id:3,name:"직원 3",limit:100000},
+  {id:4,name:"직원 4",limit:100000},
+  {id:5,name:"직원 5",limit:100000},
+];
+const DEF_CFG={darkMode:false,warnPct:80,favPlaces:["구내식당","편의점","카페","김밥천국"]};
+
+function load(){try{const s=localStorage.getItem(SK);if(s)return JSON.parse(s);}catch{}return{employees:DEF_EMP,expenses:[],pin:null,settings:DEF_CFG};}
+function fmt(n){return Math.round(n).toLocaleString("ko-KR")+"원";}
+function fmtS(n){const r=Math.round(n);if(r<10000)return r.toLocaleString("ko-KR")+"원";const v=r/10000;return(r%10000===0?v.toFixed(0):v.toFixed(1))+"만원";}
+function prevM(m){const[y,mo]=m.split("-").map(Number);return mo===1?`${y-1}-12`:`${y}-${String(mo-1).padStart(2,"0")}`;}
+function nextM(m){const[y,mo]=m.split("-").map(Number);return mo===12?`${y+1}-01`:`${y}-${String(mo+1).padStart(2,"0")}`;}
+function nmLabel(m){const[y,mo]=m.split("-");return`${y}년 ${Number(mo)}월`;}
+function gi(n){return n?n.substring(0,1):"?";}
+function hashPin(p){let h=0;for(let i=0;i<p.length;i++){h=(h<<5)-h+p.charCodeAt(i);h|=0;}return h.toString();}
+function daysInMonth(y,m){return new Date(y,m,0).getDate();}
+
+function getBal(eid,month,employees,expenses){
+  const emp=employees.find(e=>e.id===eid);
+  if(!emp)return{budget:0,spent:0,remaining:0,carryover:0};
+  const empExps=expenses.filter(e=>e.employeeId===eid);
+  // first = createdMonth와 첫내역달 중 더 이른 달 (둘다 없으면 현재달)
+  const candidates=[];
+  if(emp.createdMonth)candidates.push(emp.createdMonth);
+  if(empExps.length>0)candidates.push(empExps.map(e=>e.date.substring(0,7)).sort()[0]);
+  const first=candidates.length>0?candidates.sort()[0]:month;
+  let carry=0,cur=first<=month?first:month;
+  while(cur<=month){
+    const budget=emp.limit+carry;
+    const spent=expenses.filter(e=>e.employeeId===eid&&e.date.startsWith(cur)).reduce((s,e)=>s+e.amount,0);
+    const rem=budget-spent;
+    carry=rem>0?rem:0;
+    if(cur===month)return{budget,spent,remaining:rem,carryover:budget-emp.limit};
+    cur=nextM(cur);
+  }
+  return{budget:emp.limit,spent:0,remaining:emp.limit,carryover:0};
+}
+
+/* ── DATE SELECTOR: 연/월/일 드롭다운 ── */
+function DateSelector({value,onChange}){
+  const[y,m,d]=value.split("-").map(Number);
+  const now=new Date();
+  const years=Array.from({length:5},(_,i)=>now.getFullYear()-2+i);
+  const days=daysInMonth(y,m);
+  const clamp=(ny,nm,nd)=>{
+    const maxD=daysInMonth(ny,nm);
+    const safeD=Math.min(nd,maxD);
+    onChange(`${ny}-${String(nm).padStart(2,"0")}-${String(safeD).padStart(2,"0")}`);
+  };
+  return H("div",{className:"date-selects"},
+    H("select",{value:y,onChange:e=>clamp(Number(e.target.value),m,d)},
+      years.map(yr=>H("option",{key:yr,value:yr},yr+"년"))
+    ),
+    H("select",{value:m,onChange:e=>clamp(y,Number(e.target.value),d)},
+      Array.from({length:12},(_,i)=>H("option",{key:i+1,value:i+1},(i+1)+"월"))
+    ),
+    H("select",{value:d,onChange:e=>onChange(`${y}-${String(m).padStart(2,"0")}-${String(Number(e.target.value)).padStart(2,"0")}`)},
+      Array.from({length:days},(_,i)=>H("option",{key:i+1,value:i+1},(i+1)+"일"))
+    )
+  );
+}
+
+/* ── AMOUNT STEPPER: 클릭→수기입력 지원 ── */
+function AmountStepper({value,onChange,presets}){
+  const[editing,setEditing]=useState(false);
+  const[raw,setRaw]=useState("");
+  const inputRef=useRef(null);
+  const ps=presets&&presets.length>0?presets:[3000,5000,8000,10000,12000,15000];
+
+  const startEdit=()=>{setRaw(value>0?String(value):"");setEditing(true);setTimeout(()=>inputRef.current?.select(),10);};
+  const commitEdit=()=>{
+    const n=Number(raw.replace(/[^0-9]/g,""));
+    onChange(isNaN(n)?0:n);
+    setEditing(false);
+  };
+
+  return H("div",{className:"stepper-wrap"},
+    H("div",{className:"stepper-row"},
+      H("button",{className:"step-btn",onClick:()=>onChange(Math.max(0,value-1000))},"−"),
+      editing
+        ? H("input",{ref:inputRef,className:"step-input",type:"number",value:raw,onChange:e=>setRaw(e.target.value),onBlur:commitEdit,onKeyDown:e=>{if(e.key==="Enter")commitEdit();if(e.key==="Escape"){setEditing(false);}}})
+        : H("span",{className:"step-display",onClick:startEdit,title:"클릭하여 직접 입력"},value===0?"0원":fmt(value)),
+      H("button",{className:"step-btn",onClick:()=>onChange(value+1000)},"+")
+    ),
+    H("div",{className:"stepper-divider"}),
+    H("div",{className:"preset-row"},
+      ps.slice(0,6).map(p=>H("button",{key:p,className:`preset-btn${value===p?" active":""}`,onClick:()=>onChange(p)},fmtS(p)))
+    )
+  );
+}
+
+/* ── MONTHLY TABLE ── */
+function MonthlyTable({employeeId,currentMonth,employees,expenses}){
+  const months=[];
+  let m=currentMonth;
+  for(let i=0;i<6;i++){months.unshift(m);m=prevM(m);}
+  const data=months.map(mo=>{
+    const bal=getBal(employeeId,mo,employees,expenses);
+    return{month:mo,spent:bal.spent,isOver:bal.remaining<0,isCurrent:mo===currentMonth};
+  });
+  return H("div",{className:"month-table"},
+    H("div",{className:"month-table-row"},
+      data.map(d=>{
+        const mo=Number(d.month.substring(5));
+        const active=d.isCurrent;
+        const color=d.isOver?"var(--danger)":active?"var(--blue)":undefined;
+        return H("div",{key:d.month,className:"month-table-cell"},
+          H("div",{className:"month-table-lbl",style:active?{color:"var(--blue)",fontWeight:700}:{}},mo+"월"+(active?"★":"")),
+          H("div",{className:"month-table-val",style:color?{color,fontWeight:700}:{}},d.spent>0?fmtS(d.spent):"-")
+        );
+      })
+    )
+  );
+}
+
+/* ── PIN ── */
+function PinScreen({storedPin,onSuccess}){
+  const[pin,setPin]=useState("");
+  const[confirm,setConfirm]=useState("");
+  const[step,setStep]=useState(storedPin?"login":"setup1");
+  const[error,setError]=useState("");
+
+  const handleNum=useCallback(n=>{
+    setError("");
+    const setter=step==="setup2"?setConfirm:setPin;
+    const cur=step==="setup2"?confirm:pin;
+    const nx=cur+n;
+    if(nx.length>4)return;
+    setter(nx);
+    if(nx.length===4){
+      if(step==="login")setTimeout(()=>{if(hashPin(nx)===storedPin){onSuccess();}else{setError("비밀번호가 틀렸습니다");setPin("");}},120);
+      else if(step==="setup1")setTimeout(()=>setStep("setup2"),160);
+      else setTimeout(()=>{if(pin===nx){onSuccess(hashPin(nx));}else{setError("숫자가 일치하지 않습니다");setConfirm("");}},120);
+    }
+  },[pin,confirm,step,storedPin,onSuccess]);
+
+  const handleDel=useCallback(()=>{setError("");if(step==="setup2")setConfirm(p=>p.slice(0,-1));else setPin(p=>p.slice(0,-1));},[step]);
+
+  // 키보드 입력 지원
+  useEffect(()=>{
+    const handler=e=>{
+      if(e.key>="0"&&e.key<="9")handleNum(e.key);
+      else if(e.key==="Backspace")handleDel();
+    };
+    window.addEventListener("keydown",handler);
+    return()=>window.removeEventListener("keydown",handler);
+  },[handleNum,handleDel]);
+
+  const cur=step==="setup2"?confirm:pin;
+  const subs={login:"4자리 비밀번호를 입력하세요",setup1:"사용할 4자리 숫자를 설정하세요",setup2:"한 번 더 입력하세요"};
+  return H("div",{className:"login-wrap"},
+    H("div",{className:"login-box"},
+      H("div",{className:"login-title"},"식대 관리"),
+      H("div",{className:"login-sub"},subs[step]),
+      H("div",{className:"pin-dots"},[0,1,2,3].map(i=>H("div",{key:i,className:`pin-dot${cur.length>i?" filled":""}`}))),
+      H("div",{className:"pin-grid"},
+        ...[1,2,3,4,5,6,7,8,9].map(n=>H("button",{key:n,className:"pin-btn",onClick:()=>handleNum(String(n))},n)),
+        H("button",{key:"del",className:"pin-btn",onClick:handleDel,style:{fontSize:18}},"⌫"),
+        H("button",{key:0,className:"pin-btn",onClick:()=>handleNum("0")},"0"),
+        H("div",{key:"x"})
+      ),
+      H("div",{className:"pin-error"},error),
+      H("div",{className:"pin-keyboard-hint"},"키보드로도 입력 가능합니다")
+    )
+  );
+}
+
+/* ── SETTINGS ── */
+function SettingsModal({data,onSave,onClose}){
+  const[cfg,setCfg]=useState(()=>({...DEF_CFG,...(data.settings||{})}));
+  const[newFav,setNewFav]=useState("");
+
+  useEffect(()=>{
+    const h=e=>{if(e.key==="Escape")onClose();};
+    window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h);
+  },[onClose]);
+
+  const addFav=()=>{const t=newFav.trim();if(!t||cfg.favPlaces.includes(t))return;setCfg(c=>({...c,favPlaces:[...c.favPlaces,t]}));setNewFav("");};
+  const save=()=>onSave({settings:cfg});
+
+  return H("div",{className:"modal-bd",onClick:e=>{if(e.target.className==="modal-bd")onClose();}},
+    H("div",{className:"modal settings-w"},
+      H("div",{className:"modal-title"},"설정"),
+
+      H("div",{className:"sec"},
+        H("div",{className:"sec-title"},"앱 설정"),
+        H("div",{className:"toggle-row"},
+          H("div",null,H("div",{className:"toggle-lbl"},"다크 모드"),H("div",{className:"toggle-sub"},"어두운 화면")),
+          H("label",{className:"toggle"},H("input",{type:"checkbox",checked:cfg.darkMode,onChange:e=>setCfg(c=>({...c,darkMode:e.target.checked}))}),H("span",{className:"tslider"}))
+        ),
+        H("div",{className:"toggle-row",style:{flexDirection:"column",alignItems:"flex-start",gap:8}},
+          H("div",null,H("div",{className:"toggle-lbl"},"잔액 경고 기준"),H("div",{className:"toggle-sub"},`한도의 ${cfg.warnPct}% 이상 사용 시 노란색 경고`)),
+          H("div",{className:"warn-row",style:{width:"100%"}},
+            H("input",{type:"range",className:"warn-slider",min:50,max:95,step:5,value:cfg.warnPct,onChange:e=>setCfg(c=>({...c,warnPct:Number(e.target.value)}))}),
+            H("span",{className:"warn-val"},cfg.warnPct+"%")
+          )
+        )
+      ),
+
+      H("div",{className:"sec"},
+        H("div",{className:"sec-title"},"자주 쓰는 사용처"),
+        H("div",{className:"fav-list"},cfg.favPlaces.map(p=>H("div",{key:p,className:"fav-chip"},p,H("span",{className:"x",onClick:()=>setCfg(c=>({...c,favPlaces:c.favPlaces.filter(x=>x!==p)}))},"×")))),
+        H("div",{className:"fav-add"},
+          H("input",{type:"text",placeholder:"추가",value:newFav,onChange:e=>setNewFav(e.target.value),onKeyDown:e=>{if(e.key==="Enter")addFav();},style:{flex:1}}),
+          H("button",{className:"btn btn-primary btn-sm",onClick:addFav},"추가")
+        )
+      ),
+
+      H("div",{className:"sec"},
+        H("div",{className:"sec-title"},"보안"),
+        H("button",{className:"btn btn-danger btn-sm",onClick:()=>{if(confirm("비밀번호를 초기화합니다."))onSave({resetPin:true,settings:cfg});}},
+          "비밀번호 초기화"
+        )
+      ),
+
+      H("div",{className:"modal-actions"},
+        H("button",{className:"btn btn-ghost",onClick:onClose},"취소"),
+        H("button",{className:"btn btn-primary",onClick:save},"저장")
+      )
+    )
+  );
+}
+
+/* ── EDIT EXPENSE MODAL ── */
+function EditExpenseModal({expense,employees,favPlaces,onSave,onClose}){
+  const[form,setForm]=useState({date:expense.date,amount:expense.amount,place:expense.place,employeeId:expense.employeeId});
+
+  useEffect(()=>{
+    const h=e=>{if(e.key==="Escape")onClose();};
+    window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h);
+  },[onClose]);
+
+  const submit=()=>{
+    if(!form.amount||!form.place.trim())return;
+    onSave({...expense,date:form.date,amount:form.amount,place:form.place.trim(),employeeId:Number(form.employeeId)});
+  };
+
+  return H("div",{className:"modal-bd",onClick:e=>{if(e.target.className==="modal-bd")onClose();}},
+    H("div",{className:"modal"},
+      H("div",{className:"modal-title"},"내역 수정"),
+      H("div",{className:"fg-row"},
+        H("div",{className:"fg"},
+          H("label",null,"직원"),
+          H("select",{value:form.employeeId,onChange:e=>setForm(f=>({...f,employeeId:e.target.value})),style:{fontSize:15,fontWeight:500}},
+            employees.map(emp=>H("option",{key:emp.id,value:emp.id},emp.name))
+          )
+        ),
+        H("div",{className:"fg"},
+          H("label",null,"날짜"),
+          H(DateSelector,{value:form.date,onChange:d=>setForm(f=>({...f,date:d}))})
+        )
+      ),
+      H("div",{className:"fg"},
+        H("label",null,"금액"),
+        H(AmountStepper,{value:form.amount,onChange:v=>setForm(f=>({...f,amount:v}))})
+      ),
+      H("div",{className:"fg"},
+        H("label",null,"사용처"),
+        H("input",{type:"text",value:form.place,style:{fontSize:15},onChange:e=>setForm(f=>({...f,place:e.target.value})),onKeyDown:e=>{if(e.key==="Enter")submit();}}),
+        favPlaces.length>0&&H("div",{className:"place-chips"},
+          favPlaces.map(p=>H("button",{key:p,className:`place-chip${form.place===p?" active":""}`,onClick:()=>setForm(f=>({...f,place:p}))},p))
+        )
+      ),
+      H("div",{className:"modal-actions"},
+        H("button",{className:"btn btn-ghost",onClick:onClose},"취소"),
+        H("button",{className:"btn btn-primary",onClick:submit,disabled:!form.amount||!form.place.trim(),style:{opacity:(!form.amount||!form.place.trim())?0.45:1}},"저장")
+      )
+    )
+  );
+}
+
+/* ── ADD EMPLOYEE MODAL ── */
+function AddEmployeeModal({onAdd,onClose,currentMonth}){
+  const[name,setName]=useState("");
+  const[limit,setLimit]=useState(100000);
+  const inputRef=useRef(null);
+
+  useEffect(()=>{
+    setTimeout(()=>inputRef.current?.focus(),50);
+    const h=e=>{if(e.key==="Escape")onClose();};
+    window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h);
+  },[onClose]);
+
+  const submit=()=>{
+    if(!name.trim())return;
+    onAdd({name:name.trim(),limit:limit||100000,createdMonth:currentMonth});
+    onClose();
+  };
+
+  return H("div",{className:"modal-bd",onClick:e=>{if(e.target.className==="modal-bd")onClose();}},
+    H("div",{className:"modal"},
+      H("div",{className:"modal-title"},"직원 추가"),
+      H("div",{className:"fg"},
+        H("label",null,"이름"),
+        H("input",{ref:inputRef,type:"text",placeholder:"직원 이름",value:name,onChange:e=>setName(e.target.value),onKeyDown:e=>{if(e.key==="Enter")submit();}})
+      ),
+      H("div",{className:"fg"},
+        H("label",null,"월 한도"),
+        H(AmountStepper,{value:limit,onChange:setLimit,presets:[50000,80000,100000,120000,150000,200000]})
+      ),
+      H("div",{className:"modal-actions"},
+        H("button",{className:"btn btn-ghost",onClick:onClose},"취소"),
+        H("button",{className:"btn btn-primary",onClick:submit,disabled:!name.trim(),style:{opacity:!name.trim()?0.45:1}},"추가")
+      )
+    )
+  );
+}
+
+/* ── APP ── */
+function App(){
+  const[data,setData]=useState(load);
+  const[loggedIn,setLoggedIn]=useState(false);
+  const now=new Date();
+  const todayStr=now.toISOString().split("T")[0];
+  const[month,setMonth]=useState(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`);
+  const[selEmp,setSelEmp]=useState(null);
+  const[showAdd,setShowAdd]=useState(false);
+  const[showSettings,setShowSettings]=useState(false);
+  const[showAddEmp,setShowAddEmp]=useState(false);
+  const[editingExp,setEditingExp]=useState(null);
+  const[form,setForm]=useState({employeeId:1,date:todayStr,amount:0,place:""});
+  const[editingName,setEditingName]=useState(false);
+  const[editName,setEditName]=useState("");
+
+  const cfg={...DEF_CFG,...(data.settings||{})};
+
+  useEffect(()=>{document.documentElement.setAttribute("data-theme",cfg.darkMode?"dark":"light");},[cfg.darkMode]);
+  useEffect(()=>{try{localStorage.setItem(SK,JSON.stringify(data));}catch{}},[data]);
+
+  // ESC to close modals
+  useEffect(()=>{
+    const h=e=>{
+      if(e.key==="Escape"){
+        if(showAdd)setShowAdd(false);
+        else if(showSettings)setShowSettings(false);
+      }
+    };
+    window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h);
+  },[showAdd,showSettings]);
+
+  const empBals=data.employees.map(emp=>({...emp,...getBal(emp.id,month,data.employees,data.expenses)}));
+  const totalBudget=empBals.reduce((s,e)=>s+e.budget,0);
+  const totalSpent=empBals.reduce((s,e)=>s+e.spent,0);
+  const totalRemain=empBals.reduce((s,e)=>s+(e.remaining>0?e.remaining:0),0);
+  const totalCarry=empBals.reduce((s,e)=>s+(e.carryover||0),0);
+  const usagePct=totalBudget>0?Math.round(totalSpent/totalBudget*100):0;
+
+  const monthExps=data.expenses.filter(e=>e.date.startsWith(month)).sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  const selBal=selEmp?empBals.find(e=>e.id===selEmp):null;
+  const selEmpData=selEmp?data.employees.find(e=>e.id===selEmp):null;
+  const selCI=selEmp?data.employees.findIndex(e=>e.id===selEmp)%COLORS.length:0;
+  const selColor=COLORS[selCI];
+  const selExps=selEmp?monthExps.filter(e=>e.employeeId===selEmp):monthExps;
+
+  const addExpense=()=>{if(!form.amount||!form.place.trim())return;const exp={id:Date.now(),employeeId:Number(form.employeeId),date:form.date,amount:form.amount,place:form.place.trim()};setData(p=>({...p,expenses:[...p.expenses,exp]}));setForm(f=>({...f,amount:0,place:""}));setShowAdd(false);};
+  const deleteExp=id=>{if(confirm("삭제할까요?"))setData(p=>({...p,expenses:p.expenses.filter(e=>e.id!==id)}));};
+  const updateExp=updated=>{setData(p=>({...p,expenses:p.expenses.map(e=>e.id===updated.id?updated:e)}));setEditingExp(null);};
+  const updateLimit=(id,val)=>{const n=Number(String(val).replace(/[^0-9]/g,""));if(n>0)setData(p=>({...p,employees:p.employees.map(e=>e.id===id?{...e,limit:n}:e)}));};
+  const saveName=()=>{if(editName.trim())setData(p=>({...p,employees:p.employees.map(e=>e.id===selEmp?{...e,name:editName.trim()}:e)}));setEditingName(false);};
+  const handleSaveSettings=({settings:newCfg,resetPin})=>{
+    setData(p=>({...p,settings:newCfg,...(resetPin?{pin:null}:{})}));
+    if(resetPin)setLoggedIn(false);else setShowSettings(false);
+  };
+  const deleteEmployee=id=>{
+    const emp=data.employees.find(e=>e.id===id);
+    if(!confirm(`${emp?.name||"직원"}을 삭제할까요?`))return;
+    setData(p=>({...p,employees:p.employees.filter(e=>e.id!==id)}));
+    if(selEmp===id)setSelEmp(null);
+  };
+  const addEmployee=({name,limit,createdMonth})=>{
+    const id=Math.max(0,...data.employees.map(e=>e.id))+1;
+    setData(p=>({...p,employees:[...p.employees,{id,name,limit,createdMonth}]}));
+  };
+  const empName=id=>data.employees.find(e=>e.id===id)?.name||"?";
+  const empCI=id=>data.employees.findIndex(e=>e.id===id)%COLORS.length;
+
+  if(!loggedIn)return H(PinScreen,{storedPin:data.pin,onSuccess:pinHash=>{if(pinHash)setData(p=>({...p,pin:pinHash}));setLoggedIn(true);}});
+
+  return H(React.Fragment,null,
+    H("div",{className:"shell"},
+      H("div",{className:"top-bar"},
+        H("div",{className:"month-nav"},
+          H("div",{className:"mnav-btn",onClick:()=>setMonth(prevM(month))},"‹"),
+          H("span",{className:"month-label"},nmLabel(month)),
+          H("div",{className:"mnav-btn",onClick:()=>setMonth(nextM(month))},"›")
+        ),
+        H("div",{className:"top-right"},
+          H("button",{className:"btn",onClick:()=>setShowSettings(true)},"설정"),
+          H("button",{className:"btn btn-primary",onClick:()=>{setForm(f=>({...f,employeeId:selEmp||data.employees[0]?.id||1,date:todayStr,amount:0,place:""}));setShowAdd(true);}},
+            "+ 내역 추가"
+          )
+        )
+      ),
+
+      H("div",{className:"summary-strip"},
+        ...[
+          {label:"총 예산",val:fmt(totalBudget),sub:`직원 ${data.employees.length}명`,accent:"#d4d4d0"},
+          {label:"총 사용",val:fmt(totalSpent),sub:`사용률 ${usagePct}%`,accent:"#F0930A",
+            color:usagePct>cfg.warnPct?"var(--warn)":undefined,progress:true,pct:usagePct,pctColor:usagePct>cfg.warnPct?"var(--warn)":"#F0930A"},
+          {label:"총 잔액",val:fmt(totalRemain),sub:"잔여 합계",accent:"#00B493",color:"var(--ok)"},
+          {label:"전월 이월",val:fmt(totalCarry),sub:"누적 이월액",accent:"#0066FF",color:totalCarry>0?"var(--blue)":undefined},
+        ].map((s,i)=>H("div",{key:i,className:"s-card"},
+          H("div",{className:"s-card-body"},
+            H("div",{className:"s-label"},s.label),
+            H("div",{className:"s-val",style:s.color?{color:s.color}:{}},s.val),
+            H("div",{className:"s-sub"},s.sub)
+          ),
+          s.progress&&H("div",{className:"s-progress-wrap"},
+            H("div",{className:"s-progress-fill",style:{width:`${Math.min(s.pct,100)}%`,background:s.pctColor}})
+          )
+        ))
+      ),
+
+      H("div",{className:"body-split"},
+        H("div",{className:"emp-panel"},
+          H("div",{className:"emp-panel-hd"},"직원 "+data.employees.length+"명"),
+          H("div",{className:"emp-scroll"},
+            empBals.map((emp,i)=>{
+              const c=COLORS[i%COLORS.length];
+              const pct=emp.budget>0?Math.min(emp.spent/emp.budget,1):0;
+              const isOver=emp.remaining<0;
+              const isWarn=!isOver&&pct>=(cfg.warnPct/100);
+              return H("div",{key:emp.id,className:`emp-row${selEmp===emp.id?" sel":""}`,onClick:()=>setSelEmp(selEmp===emp.id?null:emp.id)},
+                H("button",{className:"emp-del",onClick:e=>{e.stopPropagation();deleteEmployee(emp.id);},title:"삭제"},"×"),
+                H("div",{className:"emp-top"},
+                  H("div",{className:"emp-av",style:{background:c.bg,color:c.text}},gi(emp.name)),
+                  H("div",null,
+                    H("div",{className:"emp-nm"},emp.name),
+                    emp.carryover>0&&H("div",{className:"emp-carry"},`이월 +${fmtS(emp.carryover)}`)
+                  )
+                ),
+                H("div",{className:"emp-bar-wrap"},
+                  H("div",{className:"emp-bar-fill",style:{width:`${pct*100}%`,background:isOver?"var(--danger)":isWarn?"var(--warn)":c.bar}})
+                ),
+                H("div",{className:"emp-nums"},
+                  H("span",{style:{color:"var(--text2)"}},fmtS(emp.spent)+" 사용"),
+                  H("span",{style:{color:isOver?"var(--danger)":isWarn?"var(--warn)":"var(--ok)",fontWeight:600}},
+                    isOver?fmtS(Math.abs(emp.remaining))+" 초과":fmtS(emp.remaining)+" 남음"
+                  )
+                )
+              );
+            })
+          ),
+          H("div",{className:"emp-add-row",onClick:()=>setShowAddEmp(true)},"+ 직원 추가")
+        ),
+
+        H("div",{className:"detail-panel"},
+          selEmp&&selBal&&selEmpData?H(React.Fragment,null,
+            H("div",{className:"detail-hd"},
+              H("div",{className:"d-name-area"},
+                H("div",{className:"d-av",style:{background:selColor.bg,color:selColor.text}},gi(selEmpData.name)),
+                H("div",null,
+                  editingName
+                    ?H("input",{className:"d-name-input",value:editName,autoFocus:true,onChange:e=>setEditName(e.target.value),onBlur:saveName,onKeyDown:e=>{if(e.key==="Enter")saveName();if(e.key==="Escape")setEditingName(false);}})
+                    :H("div",{className:"d-name",onClick:()=>{setEditName(selEmpData.name);setEditingName(true);}},selEmpData.name),
+                  H("div",{className:"d-hint"},"클릭하여 이름 수정")
+                )
+              ),
+              H("div",{style:{display:"flex",alignItems:"center",gap:10}},
+                H("div",{className:"limit-inline"},
+                  H("span",{className:"limit-inline-lbl"},"한도"),
+                  H("button",{className:"limit-inline-btn",onClick:()=>updateLimit(selEmpData.id,Math.max(10000,selEmpData.limit-1000))},"−"),
+                  H("span",{className:"limit-inline-val",tabIndex:0,onKeyDown:e=>{if(e.key==="ArrowUp"){e.preventDefault();updateLimit(selEmpData.id,selEmpData.limit+1000);}else if(e.key==="ArrowDown"){e.preventDefault();updateLimit(selEmpData.id,Math.max(10000,selEmpData.limit-1000));}}},fmt(selEmpData.limit)),
+                  H("button",{className:"limit-inline-btn",onClick:()=>updateLimit(selEmpData.id,selEmpData.limit+1000)},"+")
+                ),
+                H("button",{className:"btn btn-primary btn-sm",onClick:()=>{setForm(f=>({...f,employeeId:selEmp,date:todayStr,amount:0,place:""}));setShowAdd(true);}},
+                  "+ 내역 추가"
+                )
+              )
+            ),
+            H("div",{className:"stats-row"},
+              ...[
+                {label:"이번달 예산",val:fmtS(selBal.budget),sub:selBal.carryover>0?`이월 ${fmtS(selBal.carryover)} 포함`:"기본 한도"},
+                {label:"사용",val:fmtS(selBal.spent),sub:`${selBal.budget>0?Math.round(selBal.spent/selBal.budget*100):0}% 소진`},
+                {label:"잔액",val:fmtS(Math.abs(selBal.remaining)),sub:selBal.remaining<0?"한도 초과":"남은 금액",
+                  color:selBal.remaining<0?"var(--danger)":selBal.remaining/selBal.budget<(1-cfg.warnPct/100)?"var(--warn)":"var(--ok)"},
+                {label:"건수",val:`${selExps.length}건`,sub:selExps.length>0?`평균 ${fmtS(Math.round(selBal.spent/selExps.length))}`:"내역 없음"},
+              ].map((s,i)=>H("div",{key:i,className:"stat-cell"},
+                H("div",{className:"stat-lbl"},s.label),
+                H("div",{className:"stat-val",style:s.color?{color:s.color}:{}},s.val),
+                H("div",{className:"stat-sub"},s.sub)
+              ))
+            ),
+            H(MonthlyTable,{employeeId:selEmp,currentMonth:month,employees:data.employees,expenses:data.expenses}),
+            H("div",{className:"txn-hd-row"},H("div",{className:"txn-hd-lbl"},selEmpData.name+" 내역 — "+selExps.length+"건")),
+            selExps.length===0
+              ?H("div",{className:"empty-state"},"내역 없음")
+              :H("div",{className:"txn-scroll"},
+                  selExps.map(e=>H("div",{key:e.id,className:"txn-row",onClick:()=>setEditingExp(e)},
+                    H("div",{className:"txn-left"},
+                      H("span",{className:"txn-name"},e.place),
+                      H("span",{className:"txn-date"},e.date.substring(5).replace("-","/"))
+                    ),
+                    H("div",{className:"txn-right"},
+                      H("span",{className:"txn-amt"},fmt(e.amount)),
+                      H("button",{className:"txn-del",onClick:ev=>{ev.stopPropagation();deleteExp(e.id);},title:"삭제"},"×")
+                    )
+                  ))
+                )
+          ):H(React.Fragment,null,
+            H("div",{className:"all-hd"},"전체 내역 — "+monthExps.length+"건"),
+            monthExps.length===0
+              ?H("div",{className:"empty-state"},"← 직원을 선택하거나 내역을 추가하세요")
+              :H("div",{className:"txn-scroll"},
+                  monthExps.map(e=>{const c=COLORS[empCI(e.employeeId)];return H("div",{key:e.id,className:"txn-row",onClick:()=>setEditingExp(e)},
+                    H("div",{className:"txn-left"},
+                      H("span",{className:"txn-name"},e.place),
+                      H("span",{className:"pill",style:{background:c.bg,color:c.text,fontSize:11,padding:"1px 7px",borderRadius:100,fontWeight:600,flexShrink:0}},empName(e.employeeId)),
+                      H("span",{className:"txn-date"},e.date.substring(5).replace("-","/"))
+                    ),
+                    H("div",{className:"txn-right"},
+                      H("span",{className:"txn-amt"},fmt(e.amount)),
+                      H("button",{className:"txn-del",onClick:ev=>{ev.stopPropagation();deleteExp(e.id);},title:"삭제"},"×")
+                    )
+                  );})
+                )
+          )
+        )
+      )
+    ),
+
+    showAdd&&H("div",{className:"modal-bd",onClick:e=>{if(e.target.className==="modal-bd")setShowAdd(false);}},
+      H("div",{className:"modal"},
+        H("div",{className:"modal-title"},"사용 내역 추가"),
+        H("div",{className:"fg-row"},
+          H("div",{className:"fg"},
+            H("label",null,"직원"),
+            H("select",{value:form.employeeId,onChange:e=>setForm(f=>({...f,employeeId:e.target.value})),style:{fontSize:15,fontWeight:500}},
+              data.employees.map(emp=>H("option",{key:emp.id,value:emp.id},emp.name))
+            )
+          ),
+          H("div",{className:"fg"},
+            H("label",null,"날짜"),
+            H(DateSelector,{value:form.date,onChange:d=>setForm(f=>({...f,date:d}))})
+          )
+        ),
+        H("div",{className:"fg"},
+          H("label",null,"금액"),
+          H(AmountStepper,{value:form.amount,onChange:v=>setForm(f=>({...f,amount:v})),presets:[3000,5000,8000,10000,12000,15000]})
+        ),
+        H("div",{className:"fg"},
+          H("label",null,"사용처"),
+          H("input",{type:"text",placeholder:"예: 구내식당, 편의점",value:form.place,style:{fontSize:15},onChange:e=>setForm(f=>({...f,place:e.target.value})),onKeyDown:e=>{if(e.key==="Enter")addExpense();}}),
+          cfg.favPlaces.length>0&&H("div",{className:"place-chips"},
+            cfg.favPlaces.map(p=>H("button",{key:p,className:`place-chip${form.place===p?" active":""}`,onClick:()=>setForm(f=>({...f,place:p}))},p))
+          )
+        ),
+        H("div",{className:"modal-actions"},
+          H("button",{className:"btn btn-ghost",onClick:()=>setShowAdd(false)},"취소"),
+          H("button",{className:"btn btn-primary",onClick:addExpense,disabled:!form.amount||!form.place.trim(),style:{opacity:(!form.amount||!form.place.trim())?0.45:1}},"추가")
+        )
+      )
+    ),
+
+    showSettings&&H(SettingsModal,{data,onSave:handleSaveSettings,onClose:()=>setShowSettings(false)}),
+    showAddEmp&&H(AddEmployeeModal,{onAdd:addEmployee,onClose:()=>setShowAddEmp(false),currentMonth:month}),
+    editingExp&&H(EditExpenseModal,{expense:editingExp,employees:data.employees,favPlaces:cfg.favPlaces,onSave:updateExp,onClose:()=>setEditingExp(null)})
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(H(App));
+</script>
+</body>
+</html>
