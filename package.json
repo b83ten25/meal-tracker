@@ -22,10 +22,14 @@
       "index.html",
       "main.js"
     ],
+    "afterSign": "scripts/afterSign.js",
     "mac": {
       "target": "dmg",
       "identity": null,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.plist",
+      "entitlementsInherit": "entitlements.plist",
+      "hardenedRuntime": false
     },
     "win": {
       "target": "nsis"

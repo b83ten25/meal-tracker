@@ -551,11 +551,15 @@ function App(){
   const[form,setForm]=useState({employeeId:1,date:todayStr,amount:0,place:""});
   const[editingName,setEditingName]=useState(false);
   const[editName,setEditName]=useState("");
+  const[limitEditing,setLimitEditing]=useState(false);
+  const[limitRaw,setLimitRaw]=useState("");
+  const limitInputRef=useRef(null);
 
   const cfg={...DEF_CFG,...(data.settings||{})};
 
   useEffect(()=>{document.documentElement.setAttribute("data-theme",cfg.darkMode?"dark":"light");},[cfg.darkMode]);
   useEffect(()=>{try{localStorage.setItem(SK,JSON.stringify(data));}catch{}},[data]);
+  useEffect(()=>{setLimitEditing(false);},[selEmp]);
 
   // ESC to close modals
   useEffect(()=>{
@@ -595,14 +599,14 @@ function App(){
     const emp=data.employees.find(e=>e.id===id);
     if(!confirm(`${emp?.name||"직원"}을 삭제할까요?`))return;
     setData(p=>({...p,employees:p.employees.filter(e=>e.id!==id)}));
-    if(selEmp===id)setSelEmp(null);
+    if(selEmp===id){setSelEmp(null);}
   };
   const addEmployee=({name,limit,createdMonth})=>{
     const id=Math.max(0,...data.employees.map(e=>e.id))+1;
     setData(p=>({...p,employees:[...p.employees,{id,name,limit,createdMonth}]}));
   };
   const empName=id=>data.employees.find(e=>e.id===id)?.name||"?";
-  const empCI=id=>data.employees.findIndex(e=>e.id===id)%COLORS.length;
+  const empCI=id=>{const i=data.employees.findIndex(e=>e.id===id);return(i<0?0:i)%COLORS.length;};
 
   if(!loggedIn)return H(PinScreen,{storedPin:data.pin,onSuccess:pinHash=>{if(pinHash)setData(p=>({...p,pin:pinHash}));setLoggedIn(true);}});
 
@@ -693,7 +697,9 @@ function App(){
                 H("div",{className:"limit-inline"},
                   H("span",{className:"limit-inline-lbl"},"한도"),
                   H("button",{className:"limit-inline-btn",onClick:()=>updateLimit(selEmpData.id,Math.max(10000,selEmpData.limit-1000))},"−"),
-                  H("span",{className:"limit-inline-val",tabIndex:0,onKeyDown:e=>{if(e.key==="ArrowUp"){e.preventDefault();updateLimit(selEmpData.id,selEmpData.limit+1000);}else if(e.key==="ArrowDown"){e.preventDefault();updateLimit(selEmpData.id,Math.max(10000,selEmpData.limit-1000));}}},fmt(selEmpData.limit)),
+                  limitEditing
+                    ? H("input",{ref:limitInputRef,className:"limit-inline-val",type:"number",value:limitRaw,style:{width:80,textAlign:"center",border:"1.5px solid var(--blue)",borderRadius:6,padding:"2px 4px",fontSize:13,fontWeight:700,background:"var(--bg1)",color:"var(--text1)"},onChange:e=>setLimitRaw(e.target.value),onBlur:()=>{const n=Number(String(limitRaw).replace(/[^0-9]/g,""));if(n>=1000)updateLimit(selEmpData.id,n);setLimitEditing(false);},onKeyDown:e=>{if(e.key==="Enter"){const n=Number(String(limitRaw).replace(/[^0-9]/g,""));if(n>=1000)updateLimit(selEmpData.id,n);setLimitEditing(false);}if(e.key==="Escape")setLimitEditing(false);if(e.key==="ArrowUp"){e.preventDefault();const n=(Number(String(limitRaw).replace(/[^0-9]/g,""))||selEmpData.limit)+1000;setLimitRaw(String(n));}if(e.key==="ArrowDown"){e.preventDefault();const n=Math.max(1000,(Number(String(limitRaw).replace(/[^0-9]/g,""))||selEmpData.limit)-1000);setLimitRaw(String(n));}}})
+                    : H("span",{className:"limit-inline-val",tabIndex:0,title:"클릭하여 직접 입력",style:{cursor:"pointer"},onClick:()=>{setLimitRaw(String(selEmpData.limit));setLimitEditing(true);setTimeout(()=>limitInputRef.current?.select(),10);},onKeyDown:e=>{if(e.key==="ArrowUp"){e.preventDefault();updateLimit(selEmpData.id,selEmpData.limit+1000);}else if(e.key==="ArrowDown"){e.preventDefault();updateLimit(selEmpData.id,Math.max(10000,selEmpData.limit-1000));}else if(e.key==="Enter"||e.key===" "){setLimitRaw(String(selEmpData.limit));setLimitEditing(true);setTimeout(()=>limitInputRef.current?.select(),10);}}},fmt(selEmpData.limit)),
                   H("button",{className:"limit-inline-btn",onClick:()=>updateLimit(selEmpData.id,selEmpData.limit+1000)},"+")
                 ),
                 H("button",{className:"btn btn-primary btn-sm",onClick:()=>{setForm(f=>({...f,employeeId:selEmp,date:todayStr,amount:0,place:""}));setShowAdd(true);}},

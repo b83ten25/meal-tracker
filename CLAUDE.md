@@ -61,8 +61,18 @@ npm run build:win   # dist/*.exe 생성 (NSIS 설치형)
 - 모달 내 input/select: height 52px, font-size 16px
 - fmtS: 10000원 미만 "X,XXX원", 이상 "X만원"/"X.X만원"
 
+## 배포 플랫폼
+- **Windows only** (NSIS exe)
+- Mac 패키징 앱은 macOS 26.x에서 `v8::Context::FromSnapshot` 크래시 (EXC_BREAKPOINT) 발생
+  - 원인 미확인 (바이너리 identical, 서명 동일, JIT entitlement 추가해도 재현)
+  - `npm start`는 정상 작동 → Mac 개발/테스트는 개발 모드로만 사용
+  - Mac DMG 배포 중단
+
 ## 알려진 버그
 - 없음
+
+## 과거 버그 (수정됨)
+- 직원 삭제 후 흰 화면: `empCI()` 함수가 없는 직원 ID에 대해 `findIndex` → `-1` 반환, `-1 % COLORS.length = -1`, `COLORS[-1] = undefined` → `.bg` 접근 시 TypeError. `monthExps.map()`에서 삭제된 직원의 내역이 남아있을 때 발생. `empCI` 를 `i<0?0:i` 처리로 수정.
 
 ## 작업 규칙
 - 파일 1개 (index.html) 유지
