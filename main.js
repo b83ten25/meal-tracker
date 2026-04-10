@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog } = require('electron');
+const { app, BrowserWindow, dialog, Menu } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
 
@@ -22,8 +22,61 @@ autoUpdater.on('update-downloaded', () => {
 });
 autoUpdater.on('error', () => { /* 무시 */ });
 
+let win;
+let pinned = false;
+let darkMode = false;
+
+function buildMenu() {
+  const template = [
+    {
+      label: app.name,
+      submenu: [
+        {
+          label: '항상 위에 표시',
+          type: 'checkbox',
+          checked: pinned,
+          click: (item) => { pinned = item.checked; if (win) win.setAlwaysOnTop(pinned); }
+        },
+        { type: 'separator' },
+        {
+          label: darkMode ? '라이트 모드' : '다크 모드',
+          click: () => {
+            darkMode = !darkMode;
+            if (win) win.webContents.executeJavaScript(
+              `document.documentElement.setAttribute('data-theme','${darkMode ? 'dark' : 'light'}')`
+            );
+            buildMenu();
+          }
+        },
+        { type: 'separator' },
+        {
+          label: '새로고침',
+          accelerator: 'CmdOrCtrl+R',
+          click: () => { if (win) win.reload(); }
+        },
+        { type: 'separator' },
+        {
+          label: '개발자 도구',
+          accelerator: 'CmdOrCtrl+Option+I',
+          click: () => { if (win) win.webContents.toggleDevTools(); }
+        },
+        { type: 'separator' },
+        {
+          label: '업데이트 확인',
+          click: () => autoUpdater.checkForUpdates().catch(() => {})
+        },
+        {
+          label: `v${app.getVersion()}`,
+          enabled: false
+        }
+      ]
+    }
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
 function createWindow() {
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 900,
@@ -36,6 +89,11 @@ function createWindow() {
   });
 
   win.loadFile('index.html');
+  buildMenu();
+
+  win.webContents.on('did-finish-load', () => {
+    buildMenu();
+  });
 }
 
 app.whenReady().then(() => {

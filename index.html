@@ -134,6 +134,13 @@ input:focus,select:focus{border-color:var(--blue);background:var(--card-bg);}
 .txn-del{width:22px;height:22px;min-height:unset;display:flex;align-items:center;justify-content:center;border-radius:50%;background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;opacity:0;transition:opacity .15s,background .1s;padding:0;line-height:1;}
 .txn-row:hover .txn-del{opacity:1;}
 .txn-del:hover{background:var(--danger-bg)!important;color:var(--danger)!important;}
+.txn-edit{width:22px;height:22px;min-height:unset;display:flex;align-items:center;justify-content:center;border-radius:50%;background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;opacity:0;transition:opacity .15s,background .1s;padding:0;line-height:1;}
+.txn-row:hover .txn-edit{opacity:1;}
+.txn-edit:hover{background:var(--blue-bg)!important;color:var(--blue)!important;}
+.emp-mv{position:absolute;top:10px;right:36px;display:flex;flex-direction:column;gap:2px;opacity:0;transition:opacity .15s;}
+.emp-row:hover .emp-mv{opacity:1;}
+.emp-mv-btn{width:18px;height:14px;min-height:unset;display:flex;align-items:center;justify-content:center;border-radius:3px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;padding:0;line-height:1;}
+.emp-mv-btn:hover{background:var(--bg3)!important;color:var(--text)!important;}
 .empty-state{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:14px;}
 .all-hd{padding:20px 24px;font-size:19px;font-weight:700;border-bottom:1px solid var(--border);flex-shrink:0;}
 
@@ -553,6 +560,7 @@ function App(){
   const[editName,setEditName]=useState("");
   const[limitEditing,setLimitEditing]=useState(false);
   const[limitRaw,setLimitRaw]=useState("");
+  const[txnSort,setTxnSort]=useState("desc");
   const limitInputRef=useRef(null);
 
   const cfg={...DEF_CFG,...(data.settings||{})};
@@ -584,7 +592,9 @@ function App(){
   const selEmpData=selEmp?data.employees.find(e=>e.id===selEmp):null;
   const selCI=selEmp?data.employees.findIndex(e=>e.id===selEmp)%COLORS.length:0;
   const selColor=COLORS[selCI];
-  const selExps=selEmp?monthExps.filter(e=>e.employeeId===selEmp):monthExps;
+  const selExps=selEmp
+    ?data.expenses.filter(e=>e.employeeId===selEmp&&e.date.startsWith(month)).sort((a,b)=>txnSort==="desc"?b.date.localeCompare(a.date)||b.id-a.id:a.date.localeCompare(b.date)||a.id-b.id)
+    :monthExps;
 
   const addExpense=()=>{if(!form.amount||!form.place.trim())return;const exp={id:Date.now(),employeeId:Number(form.employeeId),date:form.date,amount:form.amount,place:form.place.trim()};setData(p=>({...p,expenses:[...p.expenses,exp]}));setForm(f=>({...f,amount:0,place:""}));setShowAdd(false);};
   const deleteExp=id=>{if(confirm("삭제할까요?"))setData(p=>({...p,expenses:p.expenses.filter(e=>e.id!==id)}));};
@@ -607,6 +617,8 @@ function App(){
   };
   const empName=id=>data.employees.find(e=>e.id===id)?.name||"?";
   const empCI=id=>{const i=data.employees.findIndex(e=>e.id===id);return(i<0?0:i)%COLORS.length;};
+  const moveEmployee=(id,dir)=>{setData(p=>{const arr=[...p.employees];const idx=arr.findIndex(e=>e.id===id);const ni=idx+dir;if(ni<0||ni>=arr.length)return p;[arr[idx],arr[ni]]=[arr[ni],arr[idx]];return{...p,employees:arr};});};
+  const exportCSV=()=>{const rows=[["직원명","날짜","금액","사용처"]];monthExps.forEach(e=>{rows.push([empName(e.employeeId),e.date,e.amount,e.place]);});const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`식대_${month}.csv`;a.click();URL.revokeObjectURL(url);};
 
   if(!loggedIn)return H(PinScreen,{storedPin:data.pin,onSuccess:pinHash=>{if(pinHash)setData(p=>({...p,pin:pinHash}));setLoggedIn(true);}});
 
@@ -620,6 +632,7 @@ function App(){
         ),
         H("div",{className:"top-right"},
           H("button",{className:"btn",onClick:()=>setShowSettings(true)},"설정"),
+          H("button",{className:"btn",onClick:exportCSV},"내보내기"),
           H("button",{className:"btn btn-primary",onClick:()=>{setForm(f=>({...f,employeeId:selEmp||data.employees[0]?.id||1,date:todayStr,amount:0,place:""}));setShowAdd(true);}},
             "+ 내역 추가"
           )
@@ -659,6 +672,10 @@ function App(){
               const isWarn=!isOver&&pct>=(cfg.warnPct/100);
               return H("div",{key:emp.id,className:`emp-row${selEmp===emp.id?" sel":""}`,onClick:()=>setSelEmp(selEmp===emp.id?null:emp.id)},
                 H("button",{className:"emp-del",onClick:e=>{e.stopPropagation();deleteEmployee(emp.id);},title:"삭제"},"×"),
+                H("div",{className:"emp-mv"},
+                  H("button",{className:"emp-mv-btn",title:"위로",onClick:e=>{e.stopPropagation();moveEmployee(emp.id,-1);}},"↑"),
+                  H("button",{className:"emp-mv-btn",title:"아래로",onClick:e=>{e.stopPropagation();moveEmployee(emp.id,1);}},"↓")
+                ),
                 H("div",{className:"emp-top"},
                   H("div",{className:"emp-av",style:{background:c.bg,color:c.text}},gi(emp.name)),
                   H("div",null,
@@ -721,7 +738,10 @@ function App(){
               ))
             ),
             H(MonthlyTable,{employeeId:selEmp,currentMonth:month,employees:data.employees,expenses:data.expenses}),
-            H("div",{className:"txn-hd-row"},H("div",{className:"txn-hd-lbl"},selEmpData.name+" 내역 — "+selExps.length+"건")),
+            H("div",{className:"txn-hd-row",style:{display:"flex",alignItems:"center",justifyContent:"space-between"}},
+              H("div",{className:"txn-hd-lbl"},selEmpData.name+" 내역 — "+selExps.length+"건"),
+              H("button",{className:"btn btn-ghost btn-sm",style:{fontSize:11,padding:"3px 8px",minHeight:"unset",height:"auto"},onClick:()=>setTxnSort(s=>s==="desc"?"asc":"desc")},txnSort==="desc"?"최신순 ↓":"오래된순 ↑")
+            ),
             selExps.length===0
               ?H("div",{className:"empty-state"},"내역 없음")
               :H("div",{className:"txn-scroll"},
@@ -732,6 +752,7 @@ function App(){
                     ),
                     H("div",{className:"txn-right"},
                       H("span",{className:"txn-amt"},fmt(e.amount)),
+                      H("button",{className:"txn-edit",onClick:ev=>{ev.stopPropagation();setEditingExp(e);},title:"수정"},"✏"),
                       H("button",{className:"txn-del",onClick:ev=>{ev.stopPropagation();deleteExp(e.id);},title:"삭제"},"×")
                     )
                   ))
@@ -749,6 +770,7 @@ function App(){
                     ),
                     H("div",{className:"txn-right"},
                       H("span",{className:"txn-amt"},fmt(e.amount)),
+                      H("button",{className:"txn-edit",onClick:ev=>{ev.stopPropagation();setEditingExp(e);},title:"수정"},"✏"),
                       H("button",{className:"txn-del",onClick:ev=>{ev.stopPropagation();deleteExp(e.id);},title:"삭제"},"×")
                     )
                   );})
