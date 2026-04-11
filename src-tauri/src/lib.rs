@@ -140,9 +140,32 @@ pub fn run() {
 async fn check_update(app: AppHandle) {
     let updater = match app.updater() {
         Ok(u) => u,
-        Err(_) => return,
+        Err(e) => {
+            app.dialog()
+                .message(format!("업데이트 초기화 실패: {}", e))
+                .title("업데이트 오류")
+                .blocking_show();
+            return;
+        }
     };
-    let Ok(Some(update)) = updater.check().await else { return };
+
+    let update = match updater.check().await {
+        Ok(Some(u)) => u,
+        Ok(None) => {
+            app.dialog()
+                .message("현재 최신 버전입니다.")
+                .title("업데이트 확인")
+                .blocking_show();
+            return;
+        }
+        Err(e) => {
+            app.dialog()
+                .message(format!("업데이트 확인 실패: {}", e))
+                .title("업데이트 오류")
+                .blocking_show();
+            return;
+        }
+    };
 
     app.dialog()
         .message("새 버전이 있습니다. 백그라운드에서 다운로드합니다.")
