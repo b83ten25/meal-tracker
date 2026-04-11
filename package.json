@@ -20,10 +20,11 @@
   },
   "build": {
     "appId": "com.hospital.meal-tracker",
-    "productName": "식대관리",
+    "productName": "뭐먹었니",
     "files": [
       "index.html",
-      "main.js"
+      "main.js",
+      "icon.png"
     ],
     "mac": {
       "target": "dmg",
@@ -39,7 +40,8 @@
       "repo": "meal-tracker"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "icon.png"
     },
     "nsis": {
       "oneClick": false,

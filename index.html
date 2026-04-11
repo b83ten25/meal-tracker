@@ -426,10 +426,6 @@ function SettingsModal({data,onSave,onClose}){
 
       H("div",{className:"sec"},
         H("div",{className:"sec-title"},"앱 설정"),
-        H("div",{className:"toggle-row"},
-          H("div",null,H("div",{className:"toggle-lbl"},"다크 모드"),H("div",{className:"toggle-sub"},"어두운 화면")),
-          H("label",{className:"toggle"},H("input",{type:"checkbox",checked:cfg.darkMode,onChange:e=>setCfg(c=>({...c,darkMode:e.target.checked}))}),H("span",{className:"tslider"}))
-        ),
         H("div",{className:"toggle-row",style:{flexDirection:"column",alignItems:"flex-start",gap:8}},
           H("div",null,H("div",{className:"toggle-lbl"},"잔액 경고 기준"),H("div",{className:"toggle-sub"},`한도의 ${cfg.warnPct}% 이상 사용 시 노란색 경고`)),
           H("div",{className:"warn-row",style:{width:"100%"}},

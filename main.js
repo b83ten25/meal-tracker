@@ -29,7 +29,7 @@ let darkMode = false;
 function buildMenu() {
   const template = [
     {
-      label: app.name,
+      label: app.getName(),
       submenu: [
         {
           label: '항상 위에 표시',
