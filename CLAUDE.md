@@ -2,43 +2,61 @@
 
 ## 프로젝트 개요
 병원 직원 식대 관리 앱. 순수 HTML/React CDN. 서버 없음.
-Electron으로 패키징하여 Mac(dmg) / Windows(exe) 배포.
+Tauri로 패키징하여 Mac(dmg) / Windows(exe) 배포.
 
 ## 파일 구조
 ```
 meal-tracker/
-├── index.html          # 앱 전체 (React CDN, 스타일, 로직)
-├── main.js             # Electron 메인 프로세스
-├── package.json        # npm 스크립트 + electron-builder 설정
+├── index.html              # 앱 전체 (React CDN, 스타일, 로직)
+├── icon.png                # 앱 아이콘
+├── package.json            # npm 스크립트 + @tauri-apps/cli
+├── src-tauri/
+│   ├── tauri.conf.json     # Tauri 설정 (윈도우, 아이콘, 업데이트)
+│   ├── Cargo.toml          # Rust 의존성
+│   ├── build.rs
+│   ├── icons/icon.png      # Tauri용 아이콘
+│   └── src/
+│       ├── main.rs         # 진입점
+│       └── lib.rs          # 메뉴, 업데이트, 이벤트
 ├── .github/workflows/
-│   └── build.yml       # GitHub Actions: Mac·Win 자동 빌드
+│   └── build.yml           # GitHub Actions: Mac·Win 자동 빌드
 └── .gitignore
 ```
 
 ## 실행 / 빌드
 ```bash
-npm start           # 로컬 Electron 실행
-npm run build:mac   # dist/*.dmg 생성
-npm run build:win   # dist/*.exe 생성 (NSIS 설치형)
+npm run dev         # 로컬 Tauri 개발 실행
+npm run build       # 로컬 빌드 (현재 플랫폼)
+npm run build:mac   # aarch64-apple-darwin dmg
+npm run build:win   # x86_64-pc-windows-msvc exe (NSIS)
 ```
 
-## Electron 설정
-- BrowserWindow: 1280×800, min 900×600
-- titleBarStyle: default
-- appId: com.hospital.meal-tracker
-- productName: 식대관리
+## Tauri 설정 (src-tauri/tauri.conf.json)
+- productName: 뭐먹었니
+- identifier: com.hospital.meal-tracker
+- 윈도우: 1280×800, min 900×600, title "병원 식대 관리"
+- 자동 업데이트: GitHub Releases latest.json
+
+## Tauri 메뉴바 기능 (src-tauri/src/lib.rs)
+- 항상 위에 표시 (토글)
+- 다크 모드 / 라이트 모드 (theme-change 이벤트 → index.html 수신)
+- 새로고침 (CmdOrCtrl+R)
+- 개발자 도구 (CmdOrCtrl+Alt+I)
+- 업데이트 확인
+- 버전 표시
 
 ## GitHub Actions (push to main)
-- job build-mac (macos-latest): dmg 아티팩트 업로드
-- job build-win (windows-latest): exe 아티팩트 업로드
+- job build-mac (macos-latest): aarch64 dmg 아티팩트
+- job build-win (windows-latest): x86_64 nsis exe 아티팩트
+- 환경변수: TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD
 
 ## 앱 기능 현황
 - 직원 5명 기본값 (createdMonth 필드 없음 → getBal에서 month 기준)
 - 직원 추가 시 createdMonth 저장 → 이월 계산 기준월로 사용
 - PIN 로그인 (4자리)
 - 월별 이월 자동 계산
-- 다크/라이트 모드
-- 설정: 다크모드 토글, 잔액 경고 기준, 사용처 즐겨찾기, 비밀번호 초기화
+- 다크/라이트 모드 (메뉴바에서만 조작)
+- 설정: 잔액 경고 기준, 사용처 즐겨찾기, 비밀번호 초기화
 
 ## getBal() 로직
 - first = [createdMonth, 첫내역달] 중 더 이른 달 (둘다 없으면 현재달)
@@ -62,11 +80,8 @@ npm run build:win   # dist/*.exe 생성 (NSIS 설치형)
 - fmtS: 10000원 미만 "X,XXX원", 이상 "X만원"/"X.X만원"
 
 ## 배포 플랫폼
-- **Windows only** (NSIS exe)
-- Mac 패키징 앱은 macOS 26.x에서 `v8::Context::FromSnapshot` 크래시 (EXC_BREAKPOINT) 발생
-  - 원인 미확인 (바이너리 identical, 서명 동일, JIT entitlement 추가해도 재현)
-  - `npm start`는 정상 작동 → Mac 개발/테스트는 개발 모드로만 사용
-  - Mac DMG 배포 중단
+- Windows (NSIS exe) + macOS (dmg) 동시 빌드
+- Electron 시절 macOS 26.x 크래시 이슈는 Tauri 전환으로 해소 여부 확인 필요
 
 ## 알려진 버그
 - 없음
@@ -75,6 +90,6 @@ npm run build:win   # dist/*.exe 생성 (NSIS 설치형)
 - 직원 삭제 후 흰 화면: `empCI()` 함수가 없는 직원 ID에 대해 `findIndex` → `-1` 반환, `-1 % COLORS.length = -1`, `COLORS[-1] = undefined` → `.bg` 접근 시 TypeError. `monthExps.map()`에서 삭제된 직원의 내역이 남아있을 때 발생. `empCI` 를 `i<0?0:i` 처리로 수정.
 
 ## 작업 규칙
-- 파일 1개 (index.html) 유지
+- 프론트엔드 파일 1개 (index.html) 유지
 - 수정 전 반드시 원인 파악 먼저
 - 수정 후 브라우저에서 직접 확인

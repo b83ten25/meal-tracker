@@ -1,0 +1,46 @@
+{
+  "productName": "뭐먹었니",
+  "version": "1.2.0",
+  "identifier": "com.hospital.meal-tracker",
+  "build": {
+    "frontendDist": "../index.html"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "병원 식대 관리",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.png"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "perMachine"
+      }
+    },
+    "publisher": "hospital",
+    "resources": []
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/b83ten25/meal-tracker/releases/latest/download/latest.json"
+      ],
+      "dialog": false,
+      "pubkey": ""
+    }
+  }
+}

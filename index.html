@@ -837,5 +837,13 @@ function App(){
 }
 ReactDOM.createRoot(document.getElementById("root")).render(H(App));
 </script>
+<script>
+// Tauri 메뉴바 다크모드 이벤트 수신
+if (window.__TAURI__) {
+  window.__TAURI__.event.listen('theme-change', (e) => {
+    document.documentElement.setAttribute('data-theme', e.payload);
+  });
+}
+</script>
 </body>
 </html>
