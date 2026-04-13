@@ -49,3 +49,45 @@ jobs:
           releaseBody: ''
           releaseDraft: false
           prerelease: false
+
+  create-updater-json:
+    needs: publish-tauri
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release assets and create latest.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          VERSION=${TAG#v}
+
+          # Get signatures
+          WIN_SIG=$(curl -sL -H "Authorization: token $GITHUB_TOKEN" \
+            "https://github.com/$REPO/releases/download/$TAG/MealTracker_${VERSION}_x64-setup.exe.zip.sig")
+          MAC_SIG=$(curl -sL -H "Authorization: token $GITHUB_TOKEN" \
+            "https://github.com/$REPO/releases/download/$TAG/MealTracker_${VERSION}_aarch64.dmg.sig")
+
+          # Create latest.json
+          cat > latest.json << EOF
+          {
+            "version": "$VERSION",
+            "notes": "",
+            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "platforms": {
+              "windows-x86_64": {
+                "url": "https://github.com/$REPO/releases/download/$TAG/MealTracker_${VERSION}_x64-setup.exe",
+                "signature": "$WIN_SIG"
+              },
+              "darwin-aarch64": {
+                "url": "https://github.com/$REPO/releases/download/$TAG/MealTracker_${VERSION}_aarch64.dmg",
+                "signature": "$MAC_SIG"
+              }
+            }
+          }
+          EOF
+
+          # Upload to release
+          gh release upload $TAG latest.json --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

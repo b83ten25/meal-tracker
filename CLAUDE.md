@@ -32,23 +32,29 @@ npm run build:win   # x86_64-pc-windows-msvc exe (NSIS)
 ```
 
 ## Tauri 설정 (src-tauri/tauri.conf.json)
-- productName: 뭐먹었니
+- productName: MealTracker (WiX 한글 미지원으로 영문 사용)
 - identifier: com.hospital.meal-tracker
 - 윈도우: 1280×800, min 900×600, title "병원 식대 관리"
-- 자동 업데이트: GitHub Releases latest.json
+- bundle.targets: ["app", "dmg", "nsis"] — 플랫폼별 자동 필터링
+- 자동 업데이트: GitHub Releases latest.json (단일 endpoint)
+- withGlobalTauri: true (window.__TAURI__ 노출)
 
 ## Tauri 메뉴바 기능 (src-tauri/src/lib.rs)
 - 항상 위에 표시 (토글)
 - 다크 모드 / 라이트 모드 (theme-change 이벤트 → index.html 수신)
 - 새로고침 (CmdOrCtrl+R)
 - 개발자 도구 (CmdOrCtrl+Alt+I)
-- 업데이트 확인
+- 업데이트 확인 (에러 시 다이얼로그 표시)
 - 버전 표시
 
-## GitHub Actions (push to main)
-- job build-mac (macos-latest): aarch64 dmg 아티팩트
-- job build-win (windows-latest): x86_64 nsis exe 아티팩트
-- 환경변수: TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+## GitHub Actions (v* 태그 push 시)
+- job publish-tauri: matrix (macos-latest / windows-latest) — tauri-action@v0
+  - Mac: app + dmg 번들, 서명 포함
+  - Win: nsis 번들, 서명 포함
+  - 환경변수: TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+- job create-updater-json: publish-tauri 완료 후 ubuntu-latest에서 실행
+  - .sig 파일 다운로드 → latest.json 생성 → Release에 업로드
+  - latest.json: darwin-aarch64 + windows-x86_64 플랫폼 포함
 
 ## 앱 기능 현황
 - 직원 5명 기본값 (createdMonth 필드 없음 → getBal에서 month 기준)
