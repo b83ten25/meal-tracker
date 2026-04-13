@@ -9,8 +9,18 @@ on:
       - 'v*'
 
 jobs:
-  build-mac:
-    runs-on: macos-latest
+  publish-tauri:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+          - platform: windows-latest
+            args: --target x86_64-pc-windows-msvc
+
+    runs-on: ${{ matrix.platform }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -22,103 +32,21 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin
+          targets: aarch64-apple-darwin,x86_64-pc-windows-msvc
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build macOS
-        run: npm run build:mac
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-
-      - name: List build artifacts
-        run: find src-tauri/target/aarch64-apple-darwin/release/bundle -type f | head -20
-
-      - name: Generate latest.json
-        run: |
-          VERSION=$(node -e "console.log(require('./src-tauri/tauri.conf.json').version)")
-          DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          SIG=$(cat src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz.sig)
-          TAR_FILE=$(ls src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz | head -1 | xargs basename)
-          URL="https://github.com/b83ten25/meal-tracker/releases/download/${{ github.ref_name }}/${TAR_FILE}"
-          cat > latest.json <<EOF
-          {
-            "version": "${VERSION}",
-            "notes": "",
-            "pub_date": "${DATE}",
-            "platforms": {
-              "darwin-aarch64": {
-                "signature": "${SIG}",
-                "url": "${URL}"
-              }
-            }
-          }
-          EOF
-
-      - name: Release macOS
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
-            src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz
-            latest.json
+      - name: Build and release
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-win:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-pc-windows-msvc
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build Windows
-        run: npm run build:win
-        env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-
-      - name: Generate latest-win.json
-        shell: pwsh
-        run: |
-          $VERSION = (Get-Content src-tauri/tauri.conf.json | ConvertFrom-Json).version
-          $DATE = [System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
-          $SIG_FILE = Get-ChildItem src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip.sig | Select-Object -First 1
-          $SIG = Get-Content $SIG_FILE -Raw
-          $ZIP_FILE = (Get-ChildItem src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip | Select-Object -First 1).Name
-          $URL = "https://github.com/b83ten25/meal-tracker/releases/download/${{ github.ref_name }}/$ZIP_FILE"
-          $JSON = [ordered]@{
-            version  = $VERSION
-            notes    = ""
-            pub_date = $DATE
-            platforms = [ordered]@{
-              "windows-x86_64" = [ordered]@{
-                signature = $SIG.Trim()
-                url       = $URL
-              }
-            }
-          } | ConvertTo-Json -Depth 10
-          $JSON | Out-File -FilePath latest-win.json -Encoding utf8NoBOM
-
-      - name: Release Windows
-        uses: softprops/action-gh-release@v1
         with:
-          files: |
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip
-            latest-win.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tagName: ${{ github.ref_name }}
+          releaseName: ${{ github.ref_name }}
+          releaseBody: ''
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
