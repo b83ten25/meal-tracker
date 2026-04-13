@@ -624,6 +624,42 @@ function App(){
   const moveEmployee=(id,dir)=>{setData(p=>{const arr=[...p.employees];const idx=arr.findIndex(e=>e.id===id);const ni=idx+dir;if(ni<0||ni>=arr.length)return p;[arr[idx],arr[ni]]=[arr[ni],arr[idx]];return{...p,employees:arr};});};
   const resetMonthExps=(id)=>{const emp=data.employees.find(e=>e.id===id);if(!confirm(`${emp?.name||"직원"}의 이번달 내역을 초기화할까요?`))return;setData(p=>({...p,expenses:p.expenses.filter(e=>!(e.employeeId===id&&e.date.startsWith(month)))}));};
   const exportCSV=()=>{const rows=[["직원명","날짜","금액","사용처"]];monthExps.forEach(e=>{rows.push([empName(e.employeeId),e.date,e.amount,e.place]);});const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`식대_${month}.csv`;a.click();URL.revokeObjectURL(url);};
+  const importCSV=()=>{
+    const input=document.createElement("input");
+    input.type="file";input.accept=".csv";
+    input.onchange=e=>{
+      const file=e.target.files[0];if(!file)return;
+      const reader=new FileReader();
+      reader.onload=ev=>{
+        const text=ev.target.result.replace(/^\uFEFF/,"");
+        const lines=text.split(/\r?\n/).filter(l=>l.trim());
+        if(lines.length<2){alert("내역이 없습니다.");return;}
+        const header=lines[0].split(",").map(h=>h.replace(/^"|"$/g,"").trim());
+        const ci={name:header.indexOf("직원명"),date:header.indexOf("날짜"),amount:header.indexOf("금액"),place:header.indexOf("사용처")};
+        if(ci.name<0||ci.date<0||ci.amount<0||ci.place<0){alert("CSV 형식이 올바르지 않습니다.\n필요한 컬럼: 직원명, 날짜, 금액, 사용처");return;}
+        const parseRow=line=>{const cols=[];let cur="",inQ=false;for(const ch of line){if(ch==='"'){inQ=!inQ;}else if(ch===","&&!inQ){cols.push(cur);cur="";}else cur+=ch;}cols.push(cur);return cols;};
+        setData(p=>{
+          let emps=[...p.employees];
+          const newExps=[];
+          for(let i=1;i<lines.length;i++){
+            const cols=parseRow(lines[i]);
+            const name=cols[ci.name]?.replace(/^"|"$/g,"").trim();
+            const date=cols[ci.date]?.replace(/^"|"$/g,"").trim();
+            const amount=Number(String(cols[ci.amount]||"").replace(/^"|"$/g,"").replace(/[^0-9]/g,""));
+            const place=cols[ci.place]?.replace(/^"|"$/g,"").trim();
+            if(!name||!date||!amount||!place)continue;
+            let emp=emps.find(e=>e.name===name);
+            if(!emp){const id=Math.max(0,...emps.map(e=>e.id))+1;emp={id,name,limit:100000,createdMonth:date.slice(0,7)};emps=[...emps,emp];}
+            newExps.push({id:Date.now()+i,employeeId:emp.id,date,amount,place});
+          }
+          alert(`${newExps.length}건 가져왔습니다.`);
+          return{...p,employees:emps,expenses:[...p.expenses,...newExps]};
+        });
+      };
+      reader.readAsText(file,"UTF-8");
+    };
+    input.click();
+  };
 
   if(!loggedIn)return H(PinScreen,{storedPin:data.pin,onSuccess:pinHash=>{if(pinHash)setData(p=>({...p,pin:pinHash}));sessionStorage.setItem('loggedIn','1');setLoggedIn(true);}});
 
@@ -638,6 +674,7 @@ function App(){
         H("div",{className:"top-right"},
           H("button",{className:"btn",onClick:()=>setShowSettings(true)},"설정"),
           H("button",{className:"btn",onClick:exportCSV},"내보내기"),
+          H("button",{className:"btn",onClick:importCSV},"가져오기"),
           H("button",{className:"btn btn-primary",onClick:()=>{setForm(f=>({...f,employeeId:selEmp||data.employees[0]?.id||1,date:todayStr,amount:0,place:""}));setShowAdd(true);}},
             "+ 내역 추가"
           )
