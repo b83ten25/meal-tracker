@@ -89,6 +89,9 @@ npm run build:win   # x86_64-pc-windows-msvc exe (NSIS)
 - Windows (NSIS exe) + macOS (dmg) 동시 빌드
 - Electron 시절 macOS 26.x 크래시 이슈는 Tauri 전환으로 해소 여부 확인 필요
 
+## 릴리즈 현황
+- 현재 GitHub Releases: v1.4.16 (Latest) 만 유지, 이전 릴리즈 및 태그 전체 삭제됨
+
 ## 알려진 버그
 - 없음
 
