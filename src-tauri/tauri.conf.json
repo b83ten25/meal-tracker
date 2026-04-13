@@ -43,7 +43,8 @@
     "updater": {
       "active": true,
       "endpoints": [
-        "https://github.com/b83ten25/meal-tracker/releases/latest/download/latest.json"
+        "https://github.com/b83ten25/meal-tracker/releases/latest/download/latest.json",
+        "https://github.com/b83ten25/meal-tracker/releases/latest/download/latest-win.json"
       ],
       "dialog": false,
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQyNTc1QzZGRkYyNjQ0NTQKUldSVVJDYi9iMXhYUXZmYmMrQURwdGdpTm1KS3FsclcvZFpBVUVRTWYxaW5OZjRrS3VMRVd4dSsK"
