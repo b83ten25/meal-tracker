@@ -33,6 +33,9 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
+      - name: List build artifacts
+        run: find src-tauri/target/aarch64-apple-darwin/release/bundle -type f | head -20
+
       - name: Generate latest.json
         run: |
           VERSION=$(node -e "console.log(require('./src-tauri/tauri.conf.json').version)")
