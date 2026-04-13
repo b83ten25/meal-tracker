@@ -30,10 +30,10 @@ jobs:
       - name: Build and release macOS
         uses: tauri-apps/tauri-action@v0
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
           releaseBody: ''
@@ -62,10 +62,10 @@ jobs:
       - name: Build and release Windows
         uses: tauri-apps/tauri-action@v0
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
           releaseBody: ''
