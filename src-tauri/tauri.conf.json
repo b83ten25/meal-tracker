@@ -1,5 +1,5 @@
 {
-  "productName": "뭐먹었니",
+  "productName": "MealTracker",
   "version": "1.4.0",
   "identifier": "com.hospital.meal-tracker",
   "build": {
