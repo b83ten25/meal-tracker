@@ -880,6 +880,25 @@ if (window.__TAURI__) {
   window.__TAURI__.event.listen('theme-change', (e) => {
     document.documentElement.setAttribute('data-theme', e.payload);
   });
+
+  // 업데이트 상태 토스트
+  window.__TAURI__.event.listen('update-status', (e) => {
+    if (e.payload === 'downloading') {
+      const toast = document.createElement('div');
+      toast.id = 'update-toast';
+      toast.textContent = '새 버전 다운로드 중... 완료 후 자동으로 재시작됩니다.';
+      Object.assign(toast.style, {
+        position: 'fixed', bottom: '24px', left: '50%',
+        transform: 'translateX(-50%)',
+        background: '#191919', color: '#f0f0f0',
+        padding: '12px 20px', borderRadius: '10px',
+        fontSize: '14px', zIndex: '9999',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+        pointerEvents: 'none'
+      });
+      document.body.appendChild(toast);
+    }
+  });
 }
 </script>
 </body>

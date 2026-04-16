@@ -115,7 +115,7 @@ pub fn run() {
                     "update" => {
                         let handle = app_handle.clone();
                         tauri::async_runtime::spawn(async move {
-                            check_update(handle).await;
+                            check_update(handle, true).await;
                         });
                     }
                     _ => {}
@@ -127,7 +127,7 @@ pub fn run() {
             {
                 let handle = app.handle().clone();
                 tauri::async_runtime::spawn(async move {
-                    check_update(handle).await;
+                    check_update(handle, false).await;
                 });
             }
 
@@ -137,14 +137,16 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-async fn check_update(app: AppHandle) {
+async fn check_update(app: AppHandle, manual: bool) {
     let updater = match app.updater() {
         Ok(u) => u,
         Err(e) => {
-            app.dialog()
-                .message(format!("업데이트 초기화 실패: {}", e))
-                .title("업데이트 오류")
-                .blocking_show();
+            if manual {
+                app.dialog()
+                    .message(format!("업데이트 초기화 실패: {}", e))
+                    .title("업데이트 오류")
+                    .blocking_show();
+            }
             return;
         }
     };
@@ -152,33 +154,31 @@ async fn check_update(app: AppHandle) {
     let update = match updater.check().await {
         Ok(Some(u)) => u,
         Ok(None) => {
-            app.dialog()
-                .message("현재 최신 버전입니다.")
-                .title("업데이트 확인")
-                .blocking_show();
+            if manual {
+                app.dialog()
+                    .message("현재 최신 버전입니다.")
+                    .title("업데이트 확인")
+                    .blocking_show();
+            }
             return;
         }
         Err(e) => {
-            app.dialog()
-                .message(format!("업데이트 확인 실패: {}", e))
-                .title("업데이트 오류")
-                .blocking_show();
+            if manual {
+                app.dialog()
+                    .message(format!("업데이트 확인 실패: {}", e))
+                    .title("업데이트 오류")
+                    .blocking_show();
+            }
             return;
         }
     };
 
-    app.dialog()
-        .message("새 버전이 있습니다. 백그라운드에서 다운로드합니다.")
-        .title("업데이트 확인")
-        .blocking_show();
+    // 프론트엔드에 다운로드 시작 알림
+    if let Some(win) = app.get_webview_window("main") {
+        let _ = win.emit("update-status", "downloading");
+    }
 
     if update.download_and_install(|_, _| {}, || {}).await.is_ok() {
-        let restart = app.dialog()
-            .message("업데이트가 준비됐습니다. 재시작 후 적용됩니다.")
-            .title("업데이트 준비 완료")
-            .blocking_show();
-        if restart {
-            app.restart();
-        }
+        app.restart();
     }
 }

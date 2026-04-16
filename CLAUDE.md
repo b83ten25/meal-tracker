@@ -90,7 +90,13 @@ npm run build:win   # x86_64-pc-windows-msvc exe (NSIS)
 - Electron 시절 macOS 26.x 크래시 이슈는 Tauri 전환으로 해소 여부 확인 필요
 
 ## 릴리즈 현황
-- 현재 GitHub Releases: v1.4.16 (Latest) 만 유지, 이전 릴리즈 및 태그 전체 삭제됨
+- 현재 GitHub Releases: v1.4.17 (Latest) 만 유지, 이전 릴리즈 및 태그 전체 삭제됨
+
+## 업데이터 동작 (v1.4.17~)
+- 업데이트 감지 → 프론트엔드에 `update-status` 이벤트 emit → 토스트 "새 버전 다운로드 중..." 표시
+- 다운로드 완료 → `app.restart()` 자동 호출 (다이얼로그 없음)
+- 메뉴 수동 확인: 최신 버전이면 다이얼로그 표시, 아니면 자동 다운로드+재시작
+- 자동 확인(앱 시작 시): 최신이어도 다이얼로그 없음 (silent)
 
 ## 알려진 버그
 - 없음

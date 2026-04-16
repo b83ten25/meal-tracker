@@ -1,6 +1,6 @@
 {
   "productName": "MealTracker",
-  "version": "1.4.10",
+  "version": "1.4.17",
   "identifier": "com.hospital.meal-tracker",
   "build": {
     "frontendDist": "../index.html"
